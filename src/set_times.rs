@@ -12,6 +12,35 @@ use {
     },
     std::convert::TryInto,
 };
+
+#[cfg(windows)]
+#[allow(non_camel_case_types, non_snake_case)]
+mod win_bindings {
+    pub type BOOL = i32;
+    pub type HANDLE = isize;
+
+    pub const ERROR_NOT_SUPPORTED: u32 = 50;
+
+    pub const FILE_FLAG_BACKUP_SEMANTICS: u32 = 33554432;
+    pub const FILE_FLAG_OPEN_REPARSE_POINT: u32 = 2097152;
+
+    #[repr(C)]
+    pub struct FILETIME {
+        pub dwLowDateTime: u32,
+        pub dwHighDateTime: u32,
+    }
+
+    #[link(name = "kernel32", kind = "raw-dylib")]
+    extern "system" {
+        pub fn SetFileTime(
+            hFile: HANDLE,
+            lpCreationTime: *const FILETIME,
+            lpLastAccessTime: *const FILETIME,
+            lpLastWriteTime: *const FILETIME,
+        ) -> BOOL;
+    }
+}
+
 #[cfg(windows)]
 use {
     std::{
@@ -19,9 +48,9 @@ use {
         ptr,
         time::Duration,
     },
-    windows_sys::Win32::Foundation::{ERROR_NOT_SUPPORTED, FILETIME, HANDLE},
-    windows_sys::Win32::Storage::FileSystem::{
-        SetFileTime, FILE_FLAG_BACKUP_SEMANTICS, FILE_FLAG_OPEN_REPARSE_POINT,
+    win_bindings::{
+        SetFileTime, ERROR_NOT_SUPPORTED, FILETIME, FILE_FLAG_BACKUP_SEMANTICS,
+        FILE_FLAG_OPEN_REPARSE_POINT, HANDLE,
     },
 };
 
